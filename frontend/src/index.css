@@ -1,0 +1,234 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* Racing Dark Theme */
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Racing Red Primary */
+    --primary: 0 85% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Metallic Secondary */
+    --secondary: 220 15% 15%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 220 15% 12%;
+    --muted-foreground: 220 10% 55%;
+
+    /* Cyan Accent */
+    --accent: 185 100% 50%;
+    --accent-foreground: 240 10% 4%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 15%;
+    --input: 220 15% 12%;
+    --ring: 0 85% 50%;
+
+    --radius: 0.5rem;
+
+    /* Custom Racing Colors */
+    --racing-red: 0 85% 50%;
+    --racing-cyan: 185 100% 50%;
+    --racing-yellow: 45 100% 50%;
+    --racing-purple: 270 80% 60%;
+    --racing-green: 145 80% 45%;
+    --racing-orange: 25 100% 55%;
+    
+    /* Gradients */
+    --gradient-racing: linear-gradient(135deg, hsl(0 85% 50%), hsl(25 100% 55%));
+    --gradient-cyan: linear-gradient(135deg, hsl(185 100% 50%), hsl(200 100% 60%));
+    --gradient-card: linear-gradient(180deg, hsl(240 10% 8%), hsl(240 10% 5%));
+    --gradient-hero: linear-gradient(135deg, hsl(0 85% 50% / 0.2), hsl(185 100% 50% / 0.1));
+
+    /* Shadows */
+    --shadow-glow-red: 0 0 30px hsl(0 85% 50% / 0.3);
+    --shadow-glow-cyan: 0 0 30px hsl(185 100% 50% / 0.3);
+    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.5);
+
+    --sidebar-background: 240 10% 5%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 0 85% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 220 15% 15%;
+    --sidebar-ring: 0 85% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-racing {
+    font-family: 'Orbitron', sans-serif;
+  }
+}
+
+@layer components {
+  .racing-gradient {
+    background: var(--gradient-racing);
+  }
+
+  .racing-gradient-red {
+    background: linear-gradient(135deg, hsl(0 85% 45%), hsl(0 70% 35%));
+  }
+
+  .cyan-gradient {
+    background: var(--gradient-cyan);
+  }
+
+  .card-gradient {
+    background: var(--gradient-card);
+  }
+
+  .text-gradient-red {
+    background: linear-gradient(135deg, hsl(0 85% 50%), hsl(0 70% 40%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glow-red {
+    box-shadow: var(--shadow-glow-red);
+  }
+
+  .glow-cyan {
+    box-shadow: var(--shadow-glow-cyan);
+  }
+
+  .text-gradient-racing {
+    background: var(--gradient-racing);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-cyan {
+    background: var(--gradient-cyan);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .racing-border {
+    border: 1px solid hsl(var(--border));
+    position: relative;
+  }
+
+  .racing-border::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--gradient-racing);
+  }
+
+  .stat-card {
+    @apply relative overflow-hidden rounded-lg p-4;
+    background: linear-gradient(180deg, hsl(240 10% 8%), hsl(240 10% 5%));
+    border: 1px solid hsl(220 15% 15%);
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-racing);
+  }
+
+  .position-badge {
+    @apply inline-flex items-center justify-center font-racing font-bold;
+    min-width: 2.5rem;
+    height: 2.5rem;
+    clip-path: polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%);
+  }
+
+  .position-1 {
+    background: linear-gradient(135deg, hsl(45 100% 50%), hsl(35 100% 45%));
+    color: hsl(240 10% 4%);
+  }
+
+  .position-2 {
+    background: linear-gradient(135deg, hsl(0 0% 75%), hsl(0 0% 60%));
+    color: hsl(240 10% 4%);
+  }
+
+  .position-3 {
+    background: linear-gradient(135deg, hsl(25 80% 45%), hsl(20 70% 35%));
+    color: hsl(0 0% 100%);
+  }
+
+  .lap-time-cell {
+    @apply font-mono text-sm tabular-nums;
+  }
+
+  .best-lap {
+    @apply text-racing-cyan font-bold;
+    text-shadow: 0 0 10px hsl(185 100% 50% / 0.5);
+  }
+
+  .racing-input {
+    @apply bg-muted border-border focus:border-primary focus:ring-1 focus:ring-primary;
+    transition: all 0.2s ease;
+  }
+
+  .racing-input:focus {
+    box-shadow: 0 0 15px hsl(0 85% 50% / 0.2);
+  }
+}
+
+@layer utilities {
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(0 85% 50% / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(0 85% 50% / 0.5);
+    }
+  }
+
+  .animate-slide-in {
+    animation: slide-in 0.3s ease-out;
+  }
+
+  @keyframes slide-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

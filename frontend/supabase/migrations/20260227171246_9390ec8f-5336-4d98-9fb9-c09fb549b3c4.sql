@@ -1,0 +1,1 @@
+ALTER TABLE public.badge_definitions ADD COLUMN show_preview boolean NOT NULL DEFAULT true;

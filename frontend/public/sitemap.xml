@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://kartclub.com.br/</loc>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://kartclub.com.br/championships</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kartclub.com.br/events</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kartclub.com.br/pilots</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kartclub.com.br/standings</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kartclub.com.br/auth</loc>
+    <priority>0.5</priority>
+  </url>
+</urlset>
