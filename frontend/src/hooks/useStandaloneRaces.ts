@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { USE_DJANGO_API } from "@/config/apiConfig";
+import { api } from "@/lib/djangoApi";
 
 export interface StandaloneRace {
   id: string;
@@ -24,18 +26,25 @@ export interface StandaloneRace {
 
 export type StandaloneRaceInsert = Omit<StandaloneRace, "id" | "created_at" | "updated_at">;
 
-export function useStandaloneRaces() {
+export function useStandaloneRaces(raceType?: "standalone" | "training") {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["standaloneRaces", user?.id],
+    queryKey: ["standaloneRaces", user?.id, raceType],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (USE_DJANGO_API.races) {
+        const params = raceType ? `?type=${raceType}` : "";
+        return api.get<StandaloneRace[]>(`/races/${params}`);
+      }
+      const query = supabase
         .from("standalone_races")
         .select("*")
         .eq("user_id", user!.id)
         .order("date", { ascending: false });
 
+      if (raceType) query.eq("race_type", raceType);
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as StandaloneRace[];
     },
@@ -49,6 +58,9 @@ export function useCreateStandaloneRace() {
 
   return useMutation({
     mutationFn: async (race: Omit<StandaloneRaceInsert, "user_id">) => {
+      if (USE_DJANGO_API.races) {
+        return api.post<StandaloneRace>("/races/", race);
+      }
       const { data, error } = await supabase
         .from("standalone_races")
         .insert({ ...race, user_id: user!.id })
@@ -75,6 +87,9 @@ export function useDeleteStandaloneRace() {
 
   return useMutation({
     mutationFn: async (raceId: string) => {
+      if (USE_DJANGO_API.races) {
+        return api.delete(`/races/${raceId}/`);
+      }
       const { error } = await supabase
         .from("standalone_races")
         .delete()
