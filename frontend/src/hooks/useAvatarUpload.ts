@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { USE_DJANGO_API } from "@/config/apiConfig";
+import { djangoFetch } from "@/lib/djangoApi";
 import { useUpdateProfile } from "@/hooks/useProfiles";
 
 export function useAvatarUpload() {
@@ -9,6 +11,16 @@ export function useAvatarUpload() {
   const uploadAvatar = async (userId: string, file: File): Promise<string | null> => {
     setUploading(true);
     try {
+      if (USE_DJANGO_API.profiles) {
+        const formData = new FormData();
+        formData.append("avatar", file);
+        const result = await djangoFetch<{ avatar_url: string | null }>(
+          `/profiles/${userId}/avatar/`,
+          { method: "POST", body: formData, multipart: true },
+        );
+        return result.avatar_url;
+      }
+
       const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const filePath = `${userId}/avatar.${fileExt}`;
 

@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { createUserFriendlyError } from "@/lib/errorHandler";
 import type { DriverStats, DriverBadge } from "@/types/kart";
 import type { RaceFilterType } from "@/components/dashboard/RaceTypeFilter";
+import { USE_DJANGO_API } from "@/config/apiConfig";
+import { api } from "@/lib/djangoApi";
 
 export function useDriverStats(profileId: string | undefined, filter: RaceFilterType = "all") {
   return useQuery({
@@ -84,6 +86,9 @@ export function useDriverBadges(profileId: string | undefined) {
     queryKey: ["driverBadges", profileId],
     queryFn: async () => {
       if (!profileId) return [];
+      if (USE_DJANGO_API.badges) {
+        return api.get<DriverBadge[]>(`/profiles/${profileId}/badges/`);
+      }
       const { data, error } = await supabase
         .from("driver_badges")
         .select("*")

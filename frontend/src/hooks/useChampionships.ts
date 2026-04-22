@@ -1,12 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { createUserFriendlyError } from "@/lib/errorHandler";
+import { USE_DJANGO_API } from "@/config/apiConfig";
+import { api } from "@/lib/djangoApi";
 import type { Championship, ChampionshipMember } from "@/types/kart";
 
 export function useChampionships() {
   return useQuery({
     queryKey: ["championships"],
     queryFn: async () => {
+      if (USE_DJANGO_API.championships) {
+        return api.get<Championship[]>("/championships/");
+      }
       const { data, error } = await supabase
         .from("championships")
         .select(`

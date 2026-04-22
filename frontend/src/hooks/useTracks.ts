@@ -1,12 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { createUserFriendlyError } from "@/lib/errorHandler";
+import { USE_DJANGO_API } from "@/config/apiConfig";
+import { api } from "@/lib/djangoApi";
 import type { Track } from "@/types/kart";
 
 export function useTracks() {
   return useQuery({
     queryKey: ["tracks"],
     queryFn: async () => {
+      if (USE_DJANGO_API.tracks) {
+        return api.get<Track[]>("/tracks/");
+      }
       const { data, error } = await supabase
         .from("tracks")
         .select("*")
@@ -23,7 +28,11 @@ export function useTrack(id: string | undefined) {
     queryKey: ["tracks", id],
     queryFn: async () => {
       if (!id) return null;
-      
+
+      if (USE_DJANGO_API.tracks) {
+        return api.get<Track>(`/tracks/${id}/`);
+      }
+
       const { data, error } = await supabase
         .from("tracks")
         .select("*")
@@ -49,6 +58,9 @@ export function useCreateTrack() {
 
   return useMutation({
     mutationFn: async (trackData: CreateTrackData) => {
+      if (USE_DJANGO_API.tracks) {
+        return api.post<Track>("/tracks/", trackData);
+      }
       const { data, error } = await supabase
         .from("tracks")
         .insert(trackData)
@@ -69,6 +81,9 @@ export function useDeleteTrack() {
 
   return useMutation({
     mutationFn: async (trackId: string) => {
+      if (USE_DJANGO_API.tracks) {
+        return api.delete(`/tracks/${trackId}/`);
+      }
       const { error } = await supabase
         .from("tracks")
         .delete()

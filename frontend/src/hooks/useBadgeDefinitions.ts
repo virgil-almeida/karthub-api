@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { createUserFriendlyError } from "@/lib/errorHandler";
 import { toast } from "sonner";
+import { USE_DJANGO_API } from "@/config/apiConfig";
+import { api } from "@/lib/djangoApi";
 
 export interface BadgeDefinition {
   id: string;
@@ -23,6 +25,9 @@ export function useBadgeDefinitions() {
   return useQuery({
     queryKey: ["badgeDefinitions"],
     queryFn: async () => {
+      if (USE_DJANGO_API.badges) {
+        return api.get<BadgeDefinition[]>("/badges/definitions/");
+      }
       const { data, error } = await supabase
         .from("badge_definitions")
         .select("*")
@@ -33,20 +38,25 @@ export function useBadgeDefinitions() {
   });
 }
 
+export type BadgeDefinitionInput = {
+  name: string;
+  description?: string;
+  icon_name: string;
+  color?: string;
+  is_automatic?: boolean;
+  auto_condition?: string;
+  championship_id?: string;
+  show_preview?: boolean;
+  custom_image_url?: string;
+};
+
 export function useCreateBadgeDefinition() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (badge: {
-      name: string;
-      description?: string;
-      icon_name: string;
-      color: string;
-      is_automatic?: boolean;
-      auto_condition?: string;
-      championship_id?: string;
-      show_preview?: boolean;
-      custom_image_url?: string;
-    }) => {
+    mutationFn: async (badge: BadgeDefinitionInput) => {
+      if (USE_DJANGO_API.badges) {
+        return api.post<BadgeDefinition>("/badges/definitions/", badge);
+      }
       const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from("badge_definitions")
@@ -68,6 +78,9 @@ export function useUpdateBadgeDefinition() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...data }: Partial<BadgeDefinition> & { id: string }) => {
+      if (USE_DJANGO_API.badges) {
+        return api.patch<BadgeDefinition>(`/badges/definitions/${id}/`, data);
+      }
       const { error } = await supabase
         .from("badge_definitions")
         .update({ ...data, updated_at: new Date().toISOString() })
@@ -86,6 +99,9 @@ export function useDeleteBadgeDefinition() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      if (USE_DJANGO_API.badges) {
+        return api.delete(`/badges/definitions/${id}/`);
+      }
       const { error } = await supabase.from("badge_definitions").delete().eq("id", id);
       if (error) throw createUserFriendlyError(error);
     },

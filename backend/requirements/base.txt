@@ -1,0 +1,12 @@
+Django==5.1.*
+djangorestframework==3.15.*
+djangorestframework-simplejwt==5.*
+django-cors-headers==4.*
+django-storages[s3]==1.14.*
+Pillow==10.*
+psycopg2-binary==2.9.*
+python-decouple==3.*
+dj-rest-auth==6.*
+django-filter==24.*
+bcrypt>=4.0
+drf-spectacular>=0.27

@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { USE_DJANGO_API } from "@/config/apiConfig";
+import { api } from "@/lib/djangoApi";
 
 export interface StandaloneRaceTelemetryRow {
   id: string;
@@ -21,6 +23,9 @@ export function useStandaloneRaceTelemetry(raceId: string | undefined) {
   return useQuery({
     queryKey: ["standalone-race-telemetry", raceId],
     queryFn: async () => {
+      if (USE_DJANGO_API.races) {
+        return api.get<StandaloneRaceTelemetryRow[]>(`/races/${raceId}/telemetry/`);
+      }
       const { data, error } = await supabase
         .from("standalone_race_telemetry" as any)
         .select("*")
@@ -37,6 +42,12 @@ export function useCreateStandaloneRaceTelemetry() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (entry: Omit<StandaloneRaceTelemetryRow, "id" | "created_at">) => {
+      if (USE_DJANGO_API.races) {
+        return api.post<StandaloneRaceTelemetryRow>(
+          `/races/${entry.standalone_race_id}/telemetry/`,
+          entry,
+        );
+      }
       const { data, error } = await supabase
         .from("standalone_race_telemetry" as any)
         .insert(entry as any)
@@ -55,6 +66,9 @@ export function useUpdateStandaloneRaceTelemetry() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, raceId, ...updates }: { id: string; raceId: string } & Partial<StandaloneRaceTelemetryRow>) => {
+      if (USE_DJANGO_API.races) {
+        return api.patch<StandaloneRaceTelemetryRow>(`/races/telemetry/${id}/`, updates);
+      }
       const { data, error } = await supabase
         .from("standalone_race_telemetry" as any)
         .update(updates as any)
@@ -74,6 +88,9 @@ export function useDeleteStandaloneRaceTelemetry() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, raceId }: { id: string; raceId: string }) => {
+      if (USE_DJANGO_API.races) {
+        return api.delete(`/races/telemetry/${id}/`);
+      }
       const { error } = await supabase
         .from("standalone_race_telemetry" as any)
         .delete()

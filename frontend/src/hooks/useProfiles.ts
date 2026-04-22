@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { createUserFriendlyError } from "@/lib/errorHandler";
+import { USE_DJANGO_API } from "@/config/apiConfig";
+import { api } from "@/lib/djangoApi";
 import type { Profile } from "@/types/kart";
 
 // Public profile type (without sensitive fields for unauthorized users)
@@ -24,6 +26,9 @@ export function useProfiles() {
   return useQuery({
     queryKey: ["profiles"],
     queryFn: async () => {
+      if (USE_DJANGO_API.profiles) {
+        return api.get<PublicProfile[]>("/profiles/");
+      }
       const { data, error } = await supabase
         .from("profiles")
         .select("id, username, full_name, avatar_url, bio, is_pro_member, instagram, youtube, tiktok, website, created_at, updated_at")
@@ -40,7 +45,11 @@ export function useProfile(id: string | undefined) {
     queryKey: ["profiles", id],
     queryFn: async () => {
       if (!id) return null;
-      
+
+      if (USE_DJANGO_API.profiles) {
+        return api.get<Profile>(`/profiles/${id}/`);
+      }
+
       // First get the basic profile data
       const { data, error } = await supabase
         .from("profiles")
@@ -77,9 +86,15 @@ export function useCurrentProfile() {
   return useQuery({
     queryKey: ["currentProfile"],
     queryFn: async () => {
+      if (USE_DJANGO_API.profiles) {
+        // Django: get user id from /auth/me/ then fetch profile
+        const me = await api.get<{ id: string }>("/auth/me/");
+        return api.get<Profile>(`/profiles/${me.id}/`);
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
-      
+
       // Current user can always see their own full profile including weight
       const { data, error } = await supabase
         .from("profiles")
@@ -110,6 +125,9 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: async ({ id, ...data }: { id: string } & UpdateProfileData) => {
+      if (USE_DJANGO_API.profiles) {
+        return api.patch<Profile>(`/profiles/${id}/`, data);
+      }
       const { data: result, error } = await supabase
         .from("profiles")
         .update({ ...data, updated_at: new Date().toISOString() })
