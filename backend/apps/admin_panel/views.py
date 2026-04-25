@@ -6,10 +6,10 @@ from rest_framework.views import APIView
 
 from apps.accounts.models import User, UserRole
 from apps.accounts.permissions import IsAdminTier, IsModeratorOrHigher
-from apps.accounts.serializers import UserMeSerializer, UserTierUpdateSerializer
+from apps.accounts.serializers import UserTierUpdateSerializer
 
 from .models import FeatureVisibility
-from .serializers import FeatureVisibilitySerializer
+from .serializers import AdminUserSerializer, FeatureVisibilitySerializer
 
 
 class FeatureVisibilityListView(APIView):
@@ -42,7 +42,7 @@ class AdminUserListView(APIView):
 
     def get(self, request):
         users = User.objects.select_related("role", "profile").order_by("-date_joined")
-        return Response(UserMeSerializer(users, many=True).data)
+        return Response(AdminUserSerializer(users, many=True).data)
 
 
 class AdminUserTierView(APIView):
@@ -56,7 +56,7 @@ class AdminUserTierView(APIView):
         serializer = UserTierUpdateSerializer(role, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save(updated_by=request.user)
-        return Response(UserMeSerializer(user).data)
+        return Response(AdminUserSerializer(user).data)
 
     def delete(self, request, user_pk):
         user = get_object_or_404(User, pk=user_pk)

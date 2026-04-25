@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, SubscriptionTier } from "@/contexts/AuthContext";
+import { USE_DJANGO_API } from "@/config/apiConfig";
+import { api } from "@/lib/djangoApi";
 
 export interface FeatureVisibility {
   id: string;
@@ -22,6 +24,9 @@ export function useFeatureVisibility() {
   return useQuery({
     queryKey: ["featureVisibility"],
     queryFn: async () => {
+      if (USE_DJANGO_API.admin) {
+        return api.get<FeatureVisibility[]>("/admin/feature-visibility/");
+      }
       const { data, error } = await supabase
         .from("feature_visibility")
         .select("*")
@@ -49,6 +54,9 @@ export function useUpdateFeatureVisibility() {
 
   return useMutation({
     mutationFn: async ({ id, min_tier }: { id: string; min_tier: SubscriptionTier }) => {
+      if (USE_DJANGO_API.admin) {
+        return api.patch<FeatureVisibility>(`/admin/feature-visibility/${id}/`, { min_tier });
+      }
       const { error } = await supabase
         .from("feature_visibility")
         .update({ min_tier })

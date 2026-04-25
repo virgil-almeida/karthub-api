@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { createUserFriendlyError } from "@/lib/errorHandler";
+import { USE_DJANGO_API } from "@/config/apiConfig";
+import { api } from "@/lib/djangoApi";
 
 export type SubscriptionTier = 'free' | 'user' | 'plus' | 'moderator' | 'admin';
 
@@ -18,6 +20,7 @@ export interface UserRole {
 
 export interface UserWithRole {
   id: string;
+  email?: string;
   username: string | null;
   full_name: string | null;
   avatar_url: string | null;
@@ -36,27 +39,31 @@ export const tierConfig: Record<SubscriptionTier, { label: string; color: string
 
 // Get current user's tier
 export function useCurrentUserTier() {
-  const { user } = useAuth();
-  
+  const { user, userTier } = useAuth();
+
   return useQuery({
     queryKey: ["currentUserTier", user?.id],
+    initialData: USE_DJANGO_API.auth ? userTier : undefined,
     queryFn: async (): Promise<SubscriptionTier> => {
+      if (USE_DJANGO_API.auth) return userTier;
       const { data, error } = await supabase.rpc("get_user_tier");
       if (error) throw createUserFriendlyError(error);
-      return (data as SubscriptionTier) || 'free';
+      return (data as SubscriptionTier) || "free";
     },
     enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 }
 
 // Check if current user can view analytics
 export function useCanViewAnalytics() {
-  const { user } = useAuth();
-  
+  const { user, canViewAnalytics } = useAuth();
+
   return useQuery({
     queryKey: ["canViewAnalytics", user?.id],
+    initialData: USE_DJANGO_API.auth ? canViewAnalytics : undefined,
     queryFn: async (): Promise<boolean> => {
+      if (USE_DJANGO_API.auth) return canViewAnalytics;
       const { data, error } = await supabase.rpc("can_view_analytics");
       if (error) return false;
       return data === true;
@@ -68,11 +75,13 @@ export function useCanViewAnalytics() {
 
 // Check if current user can create championships
 export function useCanCreateChampionships() {
-  const { user } = useAuth();
-  
+  const { user, canCreateChampionships } = useAuth();
+
   return useQuery({
     queryKey: ["canCreateChampionships", user?.id],
+    initialData: USE_DJANGO_API.auth ? canCreateChampionships : undefined,
     queryFn: async (): Promise<boolean> => {
+      if (USE_DJANGO_API.auth) return canCreateChampionships;
       const { data, error } = await supabase.rpc("can_create_championships");
       if (error) return false;
       return data === true;
@@ -85,25 +94,29 @@ export function useCanCreateChampionships() {
 // Get all users with their roles (admin only)
 export function useAllUsersWithRoles() {
   const { isAdmin } = useAuth();
-  
+
   return useQuery({
     queryKey: ["allUsersWithRoles"],
     queryFn: async (): Promise<UserWithRole[]> => {
+      if (USE_DJANGO_API.admin) {
+        return api.get<UserWithRole[]>("/admin/users/");
+      }
+
       // Get all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, username, full_name, avatar_url, created_at")
         .order("created_at", { ascending: false });
-      
+
       if (profilesError) throw createUserFriendlyError(profilesError);
-      
+
       // Get all roles
       const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
         .select("*");
-      
+
       if (rolesError) throw createUserFriendlyError(rolesError);
-      
+
       // Map roles to profiles
       return (profiles || []).map(profile => ({
         ...profile,
@@ -117,48 +130,49 @@ export function useAllUsersWithRoles() {
 // Update user tier
 export function useUpdateUserTier() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ 
-      userId, 
-      tier, 
-      expiresAt 
-    }: { 
-      userId: string; 
-      tier: SubscriptionTier; 
+    mutationFn: async ({
+      userId,
+      tier,
+      expiresAt,
+    }: {
+      userId: string;
+      tier: SubscriptionTier;
       expiresAt?: Date | null;
     }) => {
+      if (USE_DJANGO_API.admin) {
+        return api.patch(`/admin/users/${userId}/tier/`, {
+          tier,
+          expires_at: expiresAt?.toISOString() ?? null,
+        });
+      }
+
       // Check if user already has a role entry
       const { data: existingRole } = await supabase
         .from("user_roles")
         .select("id")
         .eq("user_id", userId)
         .single();
-      
+
       const updateData = {
         tier,
         expires_at: expiresAt?.toISOString() || null,
         updated_at: new Date().toISOString(),
       };
-      
+
       if (existingRole) {
-        // Update existing role
         const { error } = await supabase
           .from("user_roles")
           .update(updateData)
           .eq("id", existingRole.id);
-        
+
         if (error) throw createUserFriendlyError(error);
       } else {
-        // Insert new role
         const { error } = await supabase
           .from("user_roles")
-          .insert({
-            user_id: userId,
-            role: 'pilot',
-            ...updateData,
-          });
-        
+          .insert({ user_id: userId, role: "pilot", ...updateData });
+
         if (error) throw createUserFriendlyError(error);
       }
     },
@@ -173,18 +187,22 @@ export function useUpdateUserTier() {
 // Delete user role (reset to free)
 export function useResetUserTier() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (userId: string) => {
+      if (USE_DJANGO_API.admin) {
+        return api.delete(`/admin/users/${userId}/tier/`);
+      }
+
       const { error } = await supabase
         .from("user_roles")
-        .update({ 
-          tier: 'free', 
+        .update({
+          tier: "free",
           expires_at: null,
           updated_at: new Date().toISOString(),
         })
         .eq("user_id", userId);
-      
+
       if (error) throw createUserFriendlyError(error);
     },
     onSuccess: () => {

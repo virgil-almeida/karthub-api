@@ -8,15 +8,15 @@
  * Django estiver funcional para aquele ambiente.
  */
 export const USE_DJANGO_API = {
-  auth: false,
-  tracks: false,
-  profiles: false,
-  championships: false,
-  events: false,
-  races: false,
-  badges: false,
-  analytics: false,
-  admin: false,
+  auth: true,
+  tracks: true,
+  profiles: true,
+  championships: true,
+  events: true,
+  races: true,
+  badges: true,
+  analytics: true,
+  admin: true,
 } as const;
 
 export type ApiModule = keyof typeof USE_DJANGO_API;

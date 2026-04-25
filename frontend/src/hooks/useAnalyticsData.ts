@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { RaceFilterType } from "@/components/dashboard/RaceTypeFilter";
+import { USE_DJANGO_API } from "@/config/apiConfig";
+import { api } from "@/lib/djangoApi";
 
 // Types
 export interface RaceOption {
@@ -138,6 +140,11 @@ export function useRacesList(filter: RaceFilterType = "all") {
     queryKey: ["analyticsRacesList", user?.id, filter],
     queryFn: async (): Promise<RaceOption[]> => {
       if (!user?.id) return [];
+
+      if (USE_DJANGO_API.analytics) {
+        return api.get<RaceOption[]>(`/analytics/races/?filter=${filter}`);
+      }
+
       const races: RaceOption[] = [];
 
       if (filter === "all" || filter === "championship") {
@@ -197,6 +204,10 @@ export function useLapTimesForRaces(raceIds: string[]) {
     queryKey: ["analyticsLapTimes", raceIds],
     queryFn: async (): Promise<RaceLapData[]> => {
       if (!user?.id || raceIds.length === 0) return [];
+
+      if (USE_DJANGO_API.analytics) {
+        return api.get<RaceLapData[]>(`/analytics/lap-evolution/?race_ids=${raceIds.join(",")}`);
+      }
 
       const results: RaceLapData[] = [];
 
@@ -278,6 +289,12 @@ export function useBestLapEvolution(filter: RaceFilterType = "all") {
     queryFn: async () => {
       if (!user?.id) return [];
 
+      if (USE_DJANGO_API.analytics) {
+        return api.get<{ date: string; bestLap: number; bestLapStr: string; label: string }[]>(
+          `/analytics/best-lap-evolution/?filter=${filter}`,
+        );
+      }
+
       const entries: { date: string; bestLap: number; bestLapStr: string; label: string }[] = [];
 
       if (filter === "all" || filter === "championship") {
@@ -337,6 +354,10 @@ export function useTrackComparison(filter: RaceFilterType = "all") {
     queryKey: ["analyticsTrackComparison", user?.id, filter],
     queryFn: async (): Promise<TrackStats[]> => {
       if (!user?.id) return [];
+
+      if (USE_DJANGO_API.analytics) {
+        return api.get<TrackStats[]>(`/analytics/track-comparison/?filter=${filter}`);
+      }
 
       const trackMap = new Map<string, { times: number[]; count: number }>();
 
@@ -420,6 +441,25 @@ export function useHeadToHead(driverId1: string | undefined, driverId2: string |
     queryKey: ["analyticsHeadToHead", driverId1, driverId2],
     queryFn: async (): Promise<HeadToHeadResult | null> => {
       if (!driverId1 || !driverId2) return null;
+
+      if (USE_DJANGO_API.analytics) {
+        type DjangoH2HResult = Omit<HeadToHeadResult, "lapTelemetryByHeat"> & {
+          lapTelemetryByHeat: Record<string, { driver1: H2HLapTelemetry[]; driver2: H2HLapTelemetry[] }>;
+        };
+        let raw: DjangoH2HResult;
+        try {
+          raw = await api.get<DjangoH2HResult>(
+            `/analytics/head-to-head/?driver_id_1=${driverId1}&driver_id_2=${driverId2}`,
+          );
+        } catch {
+          return null;
+        }
+        if (!raw || !raw.driver1) return null;
+        return {
+          ...raw,
+          lapTelemetryByHeat: new Map(Object.entries(raw.lapTelemetryByHeat)),
+        };
+      }
 
       // Fetch results with best_lap_time, average_speed, and track info
       const [{ data: d1Results }, { data: d2Results }] = await Promise.all([
@@ -587,6 +627,10 @@ export function useAnalyticsKPIs(filter: RaceFilterType = "all") {
     queryKey: ["analyticsKPIs", user?.id, filter],
     queryFn: async (): Promise<AnalyticsKPIs> => {
       if (!user?.id) return { bestLapAllTime: null, bestLapTime: null, favoriteTrack: null, favoriteTrackCount: 0, podiumRate: 0, consistencyScore: null, totalRaces: 0 };
+
+      if (USE_DJANGO_API.analytics) {
+        return api.get<AnalyticsKPIs>(`/analytics/kpis/?filter=${filter}`);
+      }
 
       let allBestLaps: number[] = [];
       let allPositions: number[] = [];

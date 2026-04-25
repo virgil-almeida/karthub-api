@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { createUserFriendlyError } from "@/lib/errorHandler";
+import { USE_DJANGO_API } from "@/config/apiConfig";
+import { api } from "@/lib/djangoApi";
 
 // Profile mutations for admin
 export interface AdminUpdateProfileData {
@@ -17,6 +19,9 @@ export function useAdminUpdateProfile() {
 
   return useMutation({
     mutationFn: async ({ id, ...data }: { id: string } & AdminUpdateProfileData) => {
+      if (USE_DJANGO_API.profiles) {
+        return api.patch(`/profiles/${id}/`, data);
+      }
       const { data: result, error } = await supabase
         .from("profiles")
         .update({ ...data, updated_at: new Date().toISOString() })
@@ -49,6 +54,9 @@ export function useAdminUpdateChampionship() {
 
   return useMutation({
     mutationFn: async ({ id, ...data }: { id: string } & AdminUpdateChampionshipData) => {
+      if (USE_DJANGO_API.championships) {
+        return api.patch(`/championships/${id}/`, data);
+      }
       const { data: result, error } = await supabase
         .from("championships")
         .update({ ...data, updated_at: new Date().toISOString() })
@@ -70,6 +78,9 @@ export function useAdminDeleteChampionship() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (USE_DJANGO_API.championships) {
+        return api.delete(`/championships/${id}/`);
+      }
       const { error } = await supabase
         .from("championships")
         .delete()
@@ -97,6 +108,9 @@ export function useAdminUpdateEvent() {
 
   return useMutation({
     mutationFn: async ({ id, ...data }: { id: string } & AdminUpdateEventData) => {
+      if (USE_DJANGO_API.events) {
+        return api.patch(`/events/${id}/`, data);
+      }
       const { data: result, error } = await supabase
         .from("events")
         .update(data)
@@ -118,6 +132,9 @@ export function useAdminDeleteEvent() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (USE_DJANGO_API.events) {
+        return api.delete(`/events/${id}/`);
+      }
       const { error } = await supabase
         .from("events")
         .delete()
@@ -144,6 +161,10 @@ export function useAdminUpdateHeat() {
 
   return useMutation({
     mutationFn: async ({ id, eventId, ...data }: { id: string; eventId: string } & AdminUpdateHeatData) => {
+      if (USE_DJANGO_API.events) {
+        const result = await api.patch(`/heats/${id}/`, data);
+        return { result, eventId };
+      }
       const { data: result, error } = await supabase
         .from("heats")
         .update(data)
@@ -165,6 +186,10 @@ export function useAdminDeleteHeat() {
 
   return useMutation({
     mutationFn: async ({ id, eventId }: { id: string; eventId: string }) => {
+      if (USE_DJANGO_API.events) {
+        await api.delete(`/heats/${id}/`);
+        return { eventId };
+      }
       const { error } = await supabase
         .from("heats")
         .delete()
@@ -200,6 +225,10 @@ export function useAdminUpdateHeatResult() {
 
   return useMutation({
     mutationFn: async ({ id, heatId, ...data }: { id: string; heatId: string } & AdminUpdateHeatResultData) => {
+      if (USE_DJANGO_API.events) {
+        const result = await api.patch(`/heat-results/${id}/`, data);
+        return { result, heatId };
+      }
       const { data: result, error } = await supabase
         .from("heat_results")
         .update(data)
@@ -221,6 +250,10 @@ export function useAdminDeleteHeatResult() {
 
   return useMutation({
     mutationFn: async ({ id, heatId }: { id: string; heatId: string }) => {
+      if (USE_DJANGO_API.events) {
+        await api.delete(`/heat-results/${id}/`);
+        return { heatId };
+      }
       const { error } = await supabase
         .from("heat_results")
         .delete()
@@ -248,6 +281,9 @@ export function useAdminUpdateTrack() {
 
   return useMutation({
     mutationFn: async ({ id, ...data }: { id: string } & AdminUpdateTrackData) => {
+      if (USE_DJANGO_API.tracks) {
+        return api.patch(`/tracks/${id}/`, data);
+      }
       const { data: result, error } = await supabase
         .from("tracks")
         .update(data)
@@ -284,6 +320,10 @@ export function useAdminBulkInsertHeatResults() {
 
   return useMutation({
     mutationFn: async ({ heatId, results }: { heatId: string; results: BulkHeatResultData[] }) => {
+      if (USE_DJANGO_API.events) {
+        const data = await api.post(`/heats/${heatId}/results/bulk/`, results);
+        return { data, heatId };
+      }
       const { data, error } = await supabase
         .from("heat_results")
         .insert(results)
