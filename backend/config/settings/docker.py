@@ -10,6 +10,8 @@ DATABASES = {
     )
 }
 
-# SSL é terminado no nginx host; não redirecionar internamente
+# SSL é terminado no proxy externo; não redirecionar internamente
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
